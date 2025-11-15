@@ -80,8 +80,8 @@ function enemyUnit.draw()
     for i, e in ipairs(enemyUnit.enemies) do
         e.anim:draw(e.spriteSheet, e.x, e.y, 0, 1.33, 1.33, 6, 9)
 
-        love.graphics.setColor(0, 1, 0, 0.5) -- Semi-transparent green for hitbox
-        e.collider:draw('line')
+        --love.graphics.setColor(0, 1, 0, 0.5) -- Semi-transparent green for hitbox
+        --e.collider:draw('line')
 
         -- Debug circle for the center
         love.graphics.setColor(0, 1, 0)
