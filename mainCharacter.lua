@@ -14,7 +14,12 @@ function mainCharacter.load()
     player = {}
     player.x = 32
     player.y = 32
-    player.speed = 100
+    player.speed = 150
+    player.health = 100
+
+    player.invincible = false
+    player.iframeDuration = 0.5
+    player.invincibleTimer = 0
     player.spriteSheet = love.graphics.newImage("sprites/player-sheet.png")
     player.grid = anim8.newGrid(12, 18, player.spriteSheet:getWidth(), player.spriteSheet:getHeight())
 
@@ -67,6 +72,14 @@ function mainCharacter.update(dt)
 
     player.anim:update(dt)
 
+    if player.invincible then
+        -- Count down the timer
+        player.invincibleTimer = player.invincibleTimer - dt
+        if player.invincibleTimer <= 0 then
+            player.invincible = false -- Time's up!
+        end
+    end
+
     local zoom = 4
 
     local screenW = love.graphics.getWidth() / zoom
@@ -85,7 +98,23 @@ end
 function mainCharacter.draw()
     cam:attach()
         gameMap:drawLayer(gameMap.layers["ground"], 0, 0, 4, 4)
+
+        if player.invincible then
+            love.graphics.setColor(1, 1, 1, 0.5)
+        end
+
         player.anim:draw(player.spriteSheet, player.x, player.y, 0, 1.33, 1.33, 6, 9)
+
+        love.graphics.setColor(1, 1, 1)
+
+        enemyUnit.draw()
+
         gameMap:drawLayer(gameMap.layers["trees"], 0, 0, 4, 4)
+        love.graphics.setColor(1, 0, 0)
+
+        love.graphics.circle("fill", player.x, player.y, 3)
+        
+        love.graphics.setColor(1, 1, 1)
+
     cam:detach()
 end
