@@ -11,11 +11,10 @@ function love.load()
     love.graphics.setDefaultFilter("nearest", "nearest")
 end
 
-function love.update(dt)
-    world:update(dt) 
-    
+function love.update(dt) 
     mainCharacter.update(dt) 
     enemyUnit.update(dt)
+    world:update(dt) 
     score = score + 1
 
     checkCollisions()
@@ -25,7 +24,7 @@ function love.draw()
     mainCharacter.draw()
 
     time = math.floor(love.timer.getTime())
-    local standardPadding = 10
+    standardPadding = 10
 
     local scoreText = "SCORE: " .. score
     local font = love.graphics.getFont()
@@ -37,8 +36,8 @@ function love.draw()
     local windowWidth = love.graphics.getWidth()
     local windowHeight = love.graphics.getHeight()
 
-    local scoreTextX = standardPadding
-    local scoreTextY = standardPadding
+    scoreTextX = standardPadding
+    scoreTextY = standardPadding
 
     local timeTextX = windowWidth - TimeTextWidth - standardPadding
     local timeTextY = standardPadding
@@ -50,11 +49,12 @@ end
 
 
 function checkCollisions()
-    local playerRadius = 3
-    local enemyRadius = 3
+    local playerRadius = 6
+    local enemyRadius = 6
     local collisionRadiusSumSquared = (playerRadius + enemyRadius) * (playerRadius + enemyRadius)
 
     if player.invincible == false then
+        
         for i = #enemyUnit.enemies, 1, -1 do
             local e = enemyUnit.enemies[i] 
 
@@ -78,7 +78,6 @@ function checkCollisions()
         end
     end
 end
-
 
 function spawnEnemyAtRandomPosition()
     numberOfEnemies = math.floor(score / 1000) + love.math.random(1, 3)
