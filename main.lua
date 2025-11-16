@@ -1,7 +1,9 @@
 score = 0
+local spawnTimer = 0
 local spawnInterval = 2
-local spawnTimer = 0 
 local cooldown = 0
+local time = 0
+local isDead = false
 
 function love.load()
     require "mainCharacter"
@@ -43,55 +45,72 @@ function love.load()
 end
 
 function love.update(dt) 
-    mainCharacter.update(dt) 
-    enemyUnit.update(dt)
-    world:update(dt) 
+    if not isPaused then
+        mainCharacter.update(dt) 
+        enemyUnit.update(dt)
+        world:update(dt) 
 
-    checkCollisions()
+        checkCollisions()
 
-    spawnTimer = spawnTimer + dt
+        spawnTimer = spawnTimer + dt
+        
+        if spawnTimer >= spawnInterval then
+            spawnEnemiesAtRandomPositions()
+            spawnTimer = 0
+        end
+
+        if not currentMusic:isPlaying() then
+            currentMusic = sounds.musicList[love.math.random(1, #sounds.musicList)]
+            currentMusic:play()
+        end
+
+        if type(cooldown) ~= "number" then
+            cooldown = 0
+        end
+
+        if cooldown > 0 then
+            cooldown = cooldown - dt
+        end
+
+        if love.mouse.isDown(1) then
+            mouseDown(1)
+        end
+
+        time = time + dt
+    else
+        if currentMusic:isPlaying() then
+            currentMusic:pause()
+        end
+
+        
+    end
     
-    if spawnTimer >= spawnInterval then
-        spawnEnemiesAtRandomPositions()
-        spawnTimer = 0
-    end
-
-    if not currentMusic:isPlaying() then
-        currentMusic = sounds.musicList[love.math.random(1, #sounds.musicList)]
-        currentMusic:play()
-    end
-
-    if type(cooldown) ~= "number" then
-        cooldown = 0
-    end
-
-    if cooldown > 0 then
-        cooldown = cooldown - dt
-    end
-
-    if love.mouse.isDown(1) then
-        mouseDown(1)
-    end
 end
 
 function love.draw()
     mainCharacter.draw()
 
-    time = math.floor(love.timer.getTime())
-    standardPadding = 10
-
-    local scoreText = "SCORE: " .. score
-    local font = love.graphics.getFont()
-    local scoreTextWidth = (font:getWidth(scoreText)) * 2
-
-    local timeText = "TIME: " .. time
-    local TimeTextWidth = (font:getWidth(timeText)) * 2
+    local standardPadding = 10
 
     local windowWidth = love.graphics.getWidth()
     local windowHeight = love.graphics.getHeight()
 
-    scoreTextX = standardPadding
-    scoreTextY = standardPadding
+    local font = love.graphics.getFont()
+
+    local scoreText = "SCORE: " .. score
+    
+    local scoreTextWidth = (font:getWidth(scoreText)) * 2
+
+    local timeText = "TIME: " .. math.floor(time) 
+    local TimeTextWidth = (font:getWidth(timeText)) * 2
+
+    local healthText = "health: " .. player.health
+    local healthTextWidth = (font:getWidth(healthText)) * 2
+    local healthTextX = (windowWidth - healthTextWidth) / 2
+    local healthTextY = standardPadding
+
+    local scoreTextX = standardPadding
+    local scoreTextY = standardPadding
 
     local timeTextX = windowWidth - TimeTextWidth - standardPadding
     local timeTextY = standardPadding
@@ -99,8 +118,54 @@ function love.draw()
     love.graphics.print(scoreText, scoreTextX, scoreTextY, 0, 2 )
     love.graphics.print(timeText , timeTextX, timeTextY, 0, 2)
 
-    -- debug player health
-    love.graphics.print("health: " .. player.health , timeTextX - 300, timeTextY, 0, 2)
+    love.graphics.print(healthText , healthTextX, healthTextY, 0, 2)
+    
+    if isPaused then
+        local restartText = "press R to restart or Q to quit"
+        local restartTextWidth = (font:getWidth(restartText)) * 2
+
+        local restartTextX = (windowWidth - restartTextWidth) / 2
+
+        love.graphics.print(restartText, restartTextX , windowHeight / 2, 0, 2)
+    end
+end
+
+isPaused = false
+
+function love.keypressed(key)
+    if not isDead then
+        if key == "p" or key == "escape" then
+            isPaused = not isPaused
+        end 
+
+        if isPaused then
+            if key == "r" then
+                restartGame()
+            end
+        end
+
+        if key == "q" then 
+            love.window.close()
+        end
+    else
+        if key == "q" then 
+            love.window.close()
+        end
+
+        if key == "r" then
+            restartGame()
+        end
+    end
+end
+
+function restartGame()
+    mainCharacter.load() 
+    enemyUnit.load() 
+    projectile.projectiles = {}
+    score = 0
+    time = 0
+    spawnTimer = 0
+    isPaused = false
 end
 
 
@@ -125,9 +190,8 @@ function checkCollisions()
                     local randomDeathSound = sounds.deathSounds[love.math.random(1, 5)]
                     randomDeathSound:play()
 
-                    -- Reset player position and health
-                    player.collider:setPosition(32, 32)
-                    player.health = 100
+                    isDead = true
+                    isPaused = true
                 end
                 
                 player.invincible = true
@@ -140,7 +204,7 @@ function checkCollisions()
 end
 
 function spawnEnemiesAtRandomPositions()
-    local numberOfEnemies = math.floor(score / 1000) + love.math.random(1, 3)
+    local numberOfEnemies = math.floor(score / 200) + love.math.random(1, 2)
     local playerX = player.x
     local playerY = player.y
     local spawnX = love.graphics.getWidth()
@@ -175,7 +239,6 @@ function mouseDown(button)
     if button == leftMouseButton then 
         local arrowCooldown = player.arrowCooldown
         
-
         if cooldown <= 0 then
             local zoom = mainCharacter.zoom 
             local camX = mainCharacter.camX

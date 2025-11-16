@@ -88,10 +88,6 @@ function projectile.draw()
     for i, p in ipairs(projectile.projectiles) do
 
         love.graphics.draw(projectileImage, p.x, p.y, p.rotation, 1, 1, 6, 9)
-
-        -- Debug circle for the center
-        -- love.graphics.setColor(0, 0, 1)
-        -- love.graphics.circle("fill", p.targetX, p.targetY, 1)
         
         love.graphics.setColor(1, 1, 1)
     end

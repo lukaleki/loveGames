@@ -173,15 +173,6 @@ function mainCharacter.update(dt)
 
 end
 
--- function love.mousepressed(x, y, button, istouch)
---     leftMouseButton = 1
-
---     if button == leftMouseButton then 
-
---         projectile.spawn(x, y, player.projectileSpeed, player.dmg)
---     end
--- end
-
 function mainCharacter.draw()
     cam:attach()
         gameMap:drawLayer(gameMap.layers["ground"], 0, 0, 4, 4)
@@ -200,9 +191,6 @@ function mainCharacter.draw()
         projectile.draw()
 
         gameMap:drawLayer(gameMap.layers["trees"], 0, 0, 4, 4)
-        love.graphics.setColor(1, 0, 0)
-
-        love.graphics.circle("fill", player.x, player.y, 1)
         
         love.graphics.setColor(1, 1, 1)
 

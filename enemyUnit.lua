@@ -6,16 +6,15 @@ local enemySpriteSheet
 function enemyUnit.spawn(x, y)
     local e = {}
 
-    -- Collider setup (assuming 12x18 sprite size, like the player)
     e.collider = world:newRectangleCollider(x, y, 4, 4)
     e.collider:setFixedRotation(true)
-    e.collider:setMass(1) -- Give it mass so it can be moved
+    e.collider:setMass(1)
 
     e.x = x
     e.y = y
-    e.health = 100
-    e.speed = 70
-    e.dmg = 50
+    e.health = 50
+    e.speed = 130
+    e.dmg = 20
     e.spriteSheet = enemySpriteSheet 
     e.grid = anim8.newGrid(12, 18, e.spriteSheet:getWidth(), e.spriteSheet:getHeight())
 
@@ -32,6 +31,7 @@ end
 
 
 function enemyUnit.load()
+    enemyUnit.enemies = {}
     anim8 = require "libraries/anim8"
     love.graphics.setDefaultFilter("nearest", "nearest")
 
@@ -80,13 +80,6 @@ end
 function enemyUnit.draw()
     for i, e in ipairs(enemyUnit.enemies) do
         e.anim:draw(e.spriteSheet, e.x, e.y, 0, 1.33, 1.33, 6, 9)
-
-        -- love.graphics.setColor(0, 1, 0, 0.5) -- Semi-transparent green for hitbox
-        -- e.collider:draw('line')
-
-        -- Debug circle for the center
-        love.graphics.setColor(0, 1, 0)
-        love.graphics.circle("fill", e.x, e.y, 1)
 
         love.graphics.setColor(1, 1, 1)
     end
