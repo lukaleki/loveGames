@@ -53,6 +53,8 @@ function love.draw()
 
     love.graphics.print(scoreText, scoreTextX, scoreTextY, 0, 2 )
     love.graphics.print(timeText , timeTextX, timeTextY, 0, 2)
+
+    -- debug player health
     love.graphics.print("health: " .. player.health , timeTextX - 300, timeTextY, 0, 2)
 end
 
@@ -95,8 +97,10 @@ function spawnEnemiesAtRandomPositions()
     local spawnX = love.graphics.getWidth()
     local spawnY = love.graphics.getHeight()
 
-    local screenW = love.graphics.getWidth() / 4
-    local screenH = love.graphics.getHeight() / 4
+    local cameraZoom = 4
+
+    local screenW = love.graphics.getWidth() / cameraZoom
+    local screenH = love.graphics.getHeight() / cameraZoom
 
     local spawnPadding = 50
 
