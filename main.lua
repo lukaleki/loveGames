@@ -168,15 +168,17 @@ function love.keypressed(key)
     end
 
     -- Pause toggle
-    if key == "p" or key == "escape" then
-        isPaused = not isPaused
-    end
+    if not isDead then
+        if key == "p" or key == "escape" then
+         isPaused = not isPaused
+        end
 
-    if isPaused then
-        if key == "r" then restartGame() end
-        if key == "q" then love.window.close() love.audio.pause() end
+        if isPaused then
+            if key == "r" then restartGame() end
+            if key == "q" then love.window.close() love.audio.pause() end
+        end
     end
-
+   
     if isDead then
         if key == "r" then restartGame() end
         if key == "q" then love.window.close() love.audio.pause() end
