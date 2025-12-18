@@ -4,7 +4,7 @@ xp = 0
 xpThreshold = 1000
 
 local spawnTimer = 0
-local spawnInterval = 2
+local spawnInterval = 0.2
 local cooldown = 0
 local isDead = false
 
@@ -12,8 +12,10 @@ levelupMenuOpen = false
 powerupChoice = nil
 
 function love.load()
+    love.window.maximize()
     require "mainCharacter"
     require "enemyUnit"
+    require "particles"
 
     mainCharacter.load()  
     enemyUnit.load() 
@@ -278,7 +280,7 @@ function mouseDown(button)
             local worldX = (x - screenW / 2) / zoom + camX
             local worldY = (y - screenH / 2) / zoom + camY
             
-            projectile.spawn(worldX, worldY, player.projectileSpeed, player.dmg)
+            projectile.spawn(worldX, worldY, player.projectileSpeed, player.dmg, player.pierce)
             cooldown = arrowCooldown
         end
     end

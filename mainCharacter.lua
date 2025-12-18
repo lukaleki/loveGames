@@ -28,6 +28,7 @@ function mainCharacter.load()
     player.dmg = 25
     player.projectileSpeed = 300
     player.arrowCooldown = 0.5
+    player.pierce = 5
 
     player.invincible = false
     player.iframeDuration = 0.2
@@ -172,6 +173,7 @@ function mainCharacter.update(dt)
     mainCharacter.camY = camY
     mainCharacter.zoom = zoom
 
+    particles.update(dt)
 end
 
 function mainCharacter.draw()
@@ -188,6 +190,8 @@ function mainCharacter.draw()
         love.graphics.setColor(1, 1, 1)
 
         enemyUnit.draw()
+
+        particles.draw()
 
         projectile.draw()
 

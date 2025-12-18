@@ -1,8 +1,7 @@
 projectile = {}
-
 projectile.projectiles = {}
 
-function projectile.spawn(x, y, speed, dmg)
+function projectile.spawn(x, y, speed, dmg, pierce)
     local p = {}
     p.x = player.x
     p.y = player.y
@@ -26,14 +25,16 @@ function projectile.spawn(x, y, speed, dmg)
     
     p.speed = speed
     p.dmg = dmg
+    
+    p.pierce = pierce -- how many enemies it can hit before dying
+    p.hitList = {}   -- a list to remember enemies we already hit
+    
     table.insert(projectile.projectiles, p)
 end
 
 function projectile.load()
     love.graphics.setDefaultFilter("nearest", "nearest")
-
     projectileImage = love.graphics.newImage("sprites/arrow.png")
-
 end
 
 function projectile.update(dt)
@@ -44,56 +45,66 @@ function projectile.update(dt)
         p.x = p.x + p.dirX * p.speed * dt
         p.y = p.y + p.dirY * p.speed * dt
         
+        -- Distance cleanup
         local travelDistance = math.sqrt((p.x - player.x)^2 + (p.y - player.y)^2)
         if travelDistance > 500 then
             table.remove(projectile.projectiles, i)
-            break
+            -- We use goto to skip the rest of the loop for this removed projectile
+            goto continue 
         end
 
         local projectileRadius = 3
         local enemyRadius = 6
         local collisionRadiusSumSquared = (projectileRadius + enemyRadius) * (projectileRadius + enemyRadius)
 
-        local hitEnemy = false
-
+        -- Loop through enemies
         for j = #enemyUnit.enemies, 1, -1 do
             local e = enemyUnit.enemies[j] 
             
-            -- Use sprite coordinates for collision check
-            local dx = p.x - e.x
-            local dy = p.y - e.y
-            local distanceSquared = (dx * dx) + (dy * dy)
+            -- Only check collision if we haven't hit this specific enemy yet
+            if not p.hitList[e] then
+            
+                local dx = p.x - e.x
+                local dy = p.y - e.y
+                local distanceSquared = (dx * dx) + (dy * dy)
 
-            if distanceSquared < collisionRadiusSumSquared then
+                if distanceSquared < collisionRadiusSumSquared then
+                    
+                    -- mark as hit so we dont hit them again next frame
+                    p.hitList[e] = true
 
-                
-                
-                e.health = e.health - p.dmg 
-                
-                if e.health <= 0 then
-                    xp = xp + e.xpGain
-                    checkLevelUp()
-                    table.remove(enemyUnit.enemies, j)
+                    particles.spawn(e.x, e.y, "blood")
+
+                    e.health = e.health - p.dmg
+                    -- reduce pierce count
+                    p.pierce = p.pierce - 1
+
+                    -- Enemy Death Logic
+                    if e.health <= 0 then
+                        xp = xp + e.xpGain
+                        checkLevelUp()
+                        table.remove(enemyUnit.enemies, j)
+                    end
+                    
+                    -- ff the projectile ran out of pierce power, break the enemy loop
+                    if p.pierce <= 0 then
+                        break 
+                    end
                 end
-                
-                -- Mark projectile for removal
-                hitEnemy = true
-                break 
             end
         end
 
-        if hitEnemy then
+        if p.pierce <= 0 then
             table.remove(projectile.projectiles, i)
         end
+
+        ::continue::
     end
 end
+
 function projectile.draw()
     for i, p in ipairs(projectile.projectiles) do
-
         love.graphics.draw(projectileImage, p.x, p.y, p.rotation, 1, 1, 6, 9)
-        
-        love.graphics.setColor(1, 1, 1)
     end
-
     love.graphics.setColor(1, 1, 1)
 end

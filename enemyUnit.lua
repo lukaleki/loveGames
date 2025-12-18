@@ -6,7 +6,7 @@ local enemySpriteSheet
 function enemyUnit.spawn(x, y)
     local e = {}
 
-    e.collider = world:newRectangleCollider(x, y, 4, 4)
+    e.collider = world:newRectangleCollider(x, y, 6,7)
     e.collider:setFixedRotation(true)
     e.collider:setMass(1)
 
@@ -14,9 +14,9 @@ function enemyUnit.spawn(x, y)
 
     e.x = x
     e.y = y
-    e.health = math.floor(love.math.random(10 + timeBuff, 100 + timeBuff))
-    e.speed = math.floor(love.math.random(100 + timeBuff, 150 + timeBuff))
-    e.dmg = math.floor(love.math.random(5 + timeBuff, 30 + timeBuff))
+    e.health = math.floor(love.math.random(60 + timeBuff, 100 + timeBuff))
+    e.speed = 100 + timeBuff
+    e.dmg = math.floor(love.math.random(20 + timeBuff, 30 + timeBuff))
     e.xpGain = math.floor(love.math.random(75 + timeBuff, 150 + timeBuff))
     e.spriteSheet = enemySpriteSheet 
     e.grid = anim8.newGrid(12, 18, e.spriteSheet:getWidth(), e.spriteSheet:getHeight())
