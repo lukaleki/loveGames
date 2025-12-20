@@ -28,7 +28,7 @@ function mainCharacter.load()
     player.dmg = 25
     player.projectileSpeed = 300
     player.arrowCooldown = 0.5
-    player.pierce = 5
+    player.pierce = 3
 
     player.invincible = false
     player.iframeDuration = 0.2
@@ -189,6 +189,8 @@ function mainCharacter.draw()
 
         love.graphics.setColor(1, 1, 1)
 
+        crate.draw()
+        
         enemyUnit.draw()
 
         particles.draw()
