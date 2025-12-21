@@ -2,6 +2,8 @@ enemyUnit = {}
 enemyUnit.enemies = {} -- A list to hold all enemies
 
 local enemySpriteSheet
+local tntSpriteSheet
+local torchSpriteSheet
 
 local bossTime = 0
 
@@ -34,25 +36,26 @@ function enemyUnit.spawn(x, y)
         e.speed = startingSpeed + timeBuff
         e.dmg = startingDamage + timeBuff
         e.xpGain = startingXp + (timeBuff * 2)
-        e.spriteSheet = enemySpriteSheet 
-        e.grid = anim8.newGrid(12, 18, e.spriteSheet:getWidth(), e.spriteSheet:getHeight())
+        e.spriteSheet = tntSpriteSheet 
+        e.grid = anim8.newGrid(192, 192, e.spriteSheet:getWidth(), e.spriteSheet:getHeight())
         e.isBoss = false
     else 
         e.health = (startingHealth + timeBuff) * 5
         e.speed = (startingSpeed + timeBuff) * 0.5
         e.dmg = (startingDamage + timeBuff) * 5
         e.xpGain = (startingXp + (timeBuff * 2)) * 10
-        e.spriteSheet = enemySpriteSheet 
-        e.grid = anim8.newGrid(12, 18, e.spriteSheet:getWidth(), e.spriteSheet:getHeight())
+        e.spriteSheet = torchSpriteSheet
+        e.grid = anim8.newGrid(192, 192, e.spriteSheet:getWidth(), e.spriteSheet:getHeight())
         e.isBoss = true
     end
     e.animations = {
-        down  = anim8.newAnimation(e.grid("1-4", 1), 0.2),
-        left  = anim8.newAnimation(e.grid("1-4", 2), 0.2),
-        right = anim8.newAnimation(e.grid("1-4", 3), 0.2),
-        up    = anim8.newAnimation(e.grid("1-4", 4), 0.2)
+        -- down  = anim8.newAnimation(e.grid("1-4", 1), 0.2),
+        left  = anim8.newAnimation(e.grid("1-4", 2), 0.2):flipH(),
+        right = anim8.newAnimation(e.grid("1-4", 2), 0.2),
+        -- up    = anim8.newAnimation(e.grid("1-4", 4), 0.2)
     }
-    e.anim = e.animations.left
+    e.facing = "right"
+    e.anim = e.animations.right
 
     table.insert(enemyUnit.enemies, e)
 end
@@ -64,6 +67,8 @@ function enemyUnit.load()
     love.graphics.setDefaultFilter("nearest", "nearest")
 
     enemySpriteSheet = love.graphics.newImage("sprites/player-sheet.png")
+    tntSpriteSheet = love.graphics.newImage("sprites/enemy-tnt.png")
+    torchSpriteSheet = love.graphics.newImage("sprites/enemy-torch.png")
     time = 0
 end
 
@@ -89,7 +94,11 @@ function enemyUnit.update(dt)
         if math.abs(dx) > math.abs(dy) then
             e.anim = dx > 0 and e.animations.right or e.animations.left
         else
-            e.anim = dy > 0 and e.animations.down or e.animations.up
+            if dx > 0 and e.facing == "right" then
+                e.anim = e.animations.right
+            elseif dx > 0 and e.facing == "left" then
+                e.anim = e.animations.left
+            end
         end
 
         local vx = dx * e.speed
@@ -108,11 +117,12 @@ end
 
 function enemyUnit.draw()
     for i, e in ipairs(enemyUnit.enemies) do
-        love.graphics.setColor(0.7, 0, 0)
+        local ox = 96
+        local oy = 96
         if e.isBoss then 
-            e.anim:draw(e.spriteSheet, e.x, e.y, 0, 2, 2, 6, 9)
+            e.anim:draw(e.spriteSheet, e.x, e.y, 0, 0.7, 0.7, ox, oy)
         else 
-            e.anim:draw(e.spriteSheet, e.x, e.y, 0, 1.33, 1.33, 6, 9)
+            e.anim:draw(e.spriteSheet, e.x, e.y, 0, 0.3, 0.3, ox, oy)
         end
         love.graphics.setColor(1, 1, 1)
     end

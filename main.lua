@@ -137,7 +137,7 @@ function love.draw()
     local baseX = padding
     local baseY = love.graphics.getHeight() - 150
 
-    love.graphics.print("health: " .. healthText, baseX, baseY, 0, 2)
+    love.graphics.print("health: " .. math.floor(player.health), baseX, baseY, 0, 2)
     love.graphics.print("damage: " .. player.dmg, baseX, baseY + 40, 0, 2)
     love.graphics.print("speed: " .. player.speed, baseX, baseY + 80, 0, 2)
     love.graphics.print("rate: " .. player.arrowCooldown * 100 .. "%",   baseX, baseY + 120, 0, 2)
@@ -248,7 +248,7 @@ end
 
 function checkCollisions()
     local playerRadius = 6
-    local enemyRadius = 6
+    local enemyRadius = 8
     local collisionRadiusSumSquared = (playerRadius + enemyRadius) * (playerRadius + enemyRadius)
 
     if player.invincible == false then
