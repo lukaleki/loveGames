@@ -5,6 +5,9 @@ xpThreshold = 1000
 bestTime = 0
 newRecord = false
 
+gameState = "menu" -- Can be "menu" or "playing"
+menuSelection = nil -- Tracks which menu button is hovered
+
 local spawnTimer = 0
 local enemySpawnInterval = 1
 local cooldown = 0
@@ -98,191 +101,232 @@ function love.load()
 end
 
 function love.update(dt) 
-    if not isPaused then
-        mainCharacter.update(dt) 
-        enemyUnit.update(dt)
-        crate.update(dt)
-        decorations.update(dt)
-        world:update(dt) 
-
-        checkCollisions()
-        crate.checkPlayerCollision()
-
-        spawnTimer = spawnTimer + dt
-        
-        if spawnTimer >= enemySpawnInterval then
-            spawnEnemiesAtRandomPositions()
-            spawnTimer = 0
-        end
-
-        if not currentMusic:isPlaying() then
-            currentMusic = sounds.musicList[love.math.random(1, #sounds.musicList)]
-            currentMusic:play()
-        end
-
-        if type(cooldown) ~= "number" then
-            cooldown = 0
-        end
-
-        if cooldown > 0 then
-            cooldown = cooldown - dt
-        end
-
-        if love.mouse.isDown(1) then
-            mouseDown(1)
-        end
-
-        time = time + dt
-    end
+    -- Only update game logic if we are playing
+    if gameState == "playing" then
+        if not isPaused then
+            mainCharacter.update(dt) 
+            enemyUnit.update(dt)
+            crate.update(dt)
+            decorations.update(dt)
+            world:update(dt) 
     
+            checkCollisions()
+            crate.checkPlayerCollision()
+    
+            spawnTimer = spawnTimer + dt
+            
+            if spawnTimer >= enemySpawnInterval then
+                spawnEnemiesAtRandomPositions()
+                spawnTimer = 0
+            end
+    
+            if not currentMusic:isPlaying() then
+                currentMusic = sounds.musicList[love.math.random(1, #sounds.musicList)]
+                currentMusic:play()
+            end
+    
+            if type(cooldown) ~= "number" then
+                cooldown = 0
+            end
+    
+            if cooldown > 0 then
+                cooldown = cooldown - dt
+            end
+    
+            if love.mouse.isDown(1) then
+                mouseDown(1)
+            end
+    
+            time = time + dt
+        end
+    end
 end
 
 function love.draw()
-    decorations.draw()
-    mainCharacter.draw()
-    crate.drawTextEffects()
-    crate.drawBonusTimers()
+    if gameState == "menu" then
+        drawMainMenu()
+    elseif gameState == "playing" then
+        decorations.draw()
+        mainCharacter.draw()
+        crate.drawTextEffects()
+        crate.drawBonusTimers()
 
-    local standardPadding = 10
-    local windowWidth = love.graphics.getWidth()
-    local windowHeight = love.graphics.getHeight()
-    local font = love.graphics.getFont()
-
-    local xpText = "XP: " .. math.floor(xp)
-    love.graphics.print(xpText, standardPadding, standardPadding, 0, 2)
-
-    local timeText = "TIME: " .. math.floor(time) .. "s"
-    local timeTextWidth = font:getWidth(timeText) * 2
-    local timeTextX = (windowWidth - timeTextWidth) / 2 
-    local timeTextY = standardPadding
-
-    local bestTimeText = "BEST: " .. math.floor(bestTime) .. "s"
-    local bestTimeWidth = font:getWidth(bestTimeText) * 2
-    local bestTimeX = windowWidth - bestTimeWidth - standardPadding
-    local bestTimeY = standardPadding
-
-    love.graphics.print(timeText, timeTextX, timeTextY, 0, 2)
-    love.graphics.print(bestTimeText, bestTimeX, bestTimeY, 0, 2)
-
-    local padding = 10
-    local baseX = padding
-    local baseY = love.graphics.getHeight() - 150
-
-    local healthPct = math.max(0, player.health / player.maxHealth)
-
-    local xpPct = math.max(0, xp / xpThreshold)
-
-    healthQuad:setViewport(0, 0, barMaxWidth * healthPct, barHeight)
-
-    xpQuad:setViewport(0, 0, barMaxWidth * xpPct, barHeight)
-
-
-    --health bar
-
-    love.graphics.draw(healthBarFrame, -35, xpTextY)
-
-    love.graphics.draw(healthBarFill, healthQuad, baseX + barOffset.x, xpTextY + 20)
-
-    love.graphics.print(math.floor(player.health) .. "/" .. player.maxHealth, baseX + barOffset.x, xpTextY + 24)
-
-    --xp bar
-
-    love.graphics.draw(healthBarFrame, -35, xpTextY + barHeight + padding * 3)
-
-    love.graphics.draw(xpBarFill, xpQuad, xpTextX + barOffset.x, xpTextY + barHeight + padding * 3 + 20)
-
-    love.graphics.print(math.floor(xp) .. "/" .. xpThreshold, baseX + barOffset.x, xpTextY + barHeight + padding * 3 + 24)
-
-    love.graphics.print("damage: " .. player.dmg, baseX, baseY + 40, 0, 2)
-    love.graphics.print("speed: " .. player.speed, baseX, baseY + 80, 0, 2)
-    love.graphics.print("attack speed: " .. player.arrowCooldown,   baseX, baseY + 120, 0, 2)
-
-    if isPaused then
+        local standardPadding = 10
         local windowWidth = love.graphics.getWidth()
         local windowHeight = love.graphics.getHeight()
+        local font = love.graphics.getFont()
 
-        if levelupMenuOpen then
-            -- LEVEL UP MENU
-            local menuWidth = 450
-            local menuHeight = 400
-            local menuX = (windowWidth - menuWidth) / 2
-            local menuY = (windowHeight - menuHeight) / 2
-            
-            love.graphics.setColor(0, 0, 0, 0.7)
-            love.graphics.rectangle("fill", menuX, menuY, menuWidth, menuHeight)
+        local xpText = "XP: " .. math.floor(xp)
+        local xpTextY = standardPadding
+        local xpTextX = standardPadding
+        love.graphics.print(xpText, standardPadding, standardPadding, 0, 2)
 
-            local titleText = "LEVEL UP! Choose a power-up:"
-            local titleWidth = font:getWidth(titleText) * 2
-            love.graphics.setColor(1, 1, 1)
-            love.graphics.print(titleText, menuX + (menuWidth - titleWidth)/2, menuY + 30, 0, 2)
+        local timeText = "TIME: " .. math.floor(time) .. "s"
+        local timeTextWidth = font:getWidth(timeText) * 2
+        local timeTextX = (windowWidth - timeTextWidth) / 2 
+        local timeTextY = standardPadding
 
-            local buttonX = menuX + 40
-            local buttonY = menuY + 90
-            local buttonWidth = menuWidth - 80
-            local buttonHeight = 40
+        local bestTimeText = "BEST: " .. math.floor(bestTime) .. "s"
+        local bestTimeWidth = font:getWidth(bestTimeText) * 2
+        local bestTimeX = windowWidth - bestTimeWidth - standardPadding
+        local bestTimeY = standardPadding
 
-            drawButton("+40 Max Health", buttonX, buttonY, buttonWidth, buttonHeight, 
-                      powerupChoice == "health")
-            drawButton("+10 Damage", buttonX, buttonY + 50, buttonWidth, buttonHeight,
-                      powerupChoice == "damage")
-            drawButton("+5 Speed", buttonX, buttonY + 100, buttonWidth, buttonHeight,
-                      powerupChoice == "speed")
-            drawButton("+10% Attack Speed", buttonX, buttonY + 150, buttonWidth, buttonHeight,
-                      powerupChoice == "shootingRate")
-            drawButton("Heal to full HP", buttonX, buttonY + 200, buttonWidth, buttonHeight,
-                      powerupChoice == "heal")
-            drawButton("+1 Piercing", buttonX, buttonY + 250, buttonWidth, buttonHeight,
-                      powerupChoice == "piercing")
-        else
-            -- REGULAR PAUSE MENU OR DEATH MENU
-            if isDead then
-                -- DEATH MENU (shows survival time)
-                local menuWidth = 400
-                local menuHeight = 250 
+        love.graphics.print(timeText, timeTextX, timeTextY, 0, 2)
+        love.graphics.print(bestTimeText, bestTimeX, bestTimeY, 0, 2)
+
+        local padding = 10
+        local baseX = padding
+        local baseY = love.graphics.getHeight() - 150
+
+        local healthPct = math.max(0, player.health / player.maxHealth)
+
+        local xpPct = math.max(0, xp / xpThreshold)
+
+        healthQuad:setViewport(0, 0, barMaxWidth * healthPct, barHeight)
+
+        xpQuad:setViewport(0, 0, barMaxWidth * xpPct, barHeight)
+
+
+        --health bar
+
+        love.graphics.draw(healthBarFrame, -35, xpTextY)
+
+        love.graphics.draw(healthBarFill, healthQuad, baseX + barOffset.x, xpTextY + 20)
+
+        love.graphics.print(math.floor(player.health) .. "/" .. player.maxHealth, baseX + barOffset.x, xpTextY + 24)
+
+        --xp bar
+
+        love.graphics.draw(healthBarFrame, -35, xpTextY + barHeight + padding * 3)
+
+        love.graphics.draw(xpBarFill, xpQuad, xpTextX + barOffset.x, xpTextY + barHeight + padding * 3 + 20)
+
+        love.graphics.print(math.floor(xp) .. "/" .. xpThreshold, baseX + barOffset.x, xpTextY + barHeight + padding * 3 + 24)
+
+        love.graphics.print("damage: " .. player.dmg, baseX, baseY + 40, 0, 2)
+        love.graphics.print("speed: " .. player.speed, baseX, baseY + 80, 0, 2)
+        love.graphics.print("attack speed: " .. player.arrowCooldown .. "s",   baseX, baseY + 120, 0, 2)
+
+        if isPaused then
+            local windowWidth = love.graphics.getWidth()
+            local windowHeight = love.graphics.getHeight()
+
+            if levelupMenuOpen then
+                -- LEVEL UP MENU
+                local menuWidth = 450
+                local menuHeight = 400
                 local menuX = (windowWidth - menuWidth) / 2
                 local menuY = (windowHeight - menuHeight) / 2
-                    
-                love.graphics.setColor(0, 0, 0, 0.7)
-                love.graphics.rectangle("fill", menuX, menuY, menuWidth, menuHeight)
-
-                local buttonWidth = 300
-                local buttonX = menuX + (menuWidth - buttonWidth) / 2
-
-                love.graphics.setColor(1, 1, 1)
-                local survivedText = "You survived: " .. math.floor(time) .. " seconds"
-                local survivedWidth = font:getWidth(survivedText) * 1.5
-                love.graphics.print(survivedText, menuX + (menuWidth - survivedWidth)/2, menuY + 30, 0, 1.5)
-
-                if newRecord then
-                    local recordText = "NEW RECORD!"
-                    local recordWidth = font:getWidth(recordText) * 1.5
-                    love.graphics.setColor(1, 1, 0) 
-                    love.graphics.print(recordText, menuX + (menuWidth - recordWidth)/2, menuY + 60, 0, 1.5)
-                    love.graphics.setColor(1, 1, 1) 
-                end
                 
-                drawButton("RESTART", buttonX, menuY + 100, buttonWidth, 50, powerupChoice == "restart")
-                drawButton("QUIT", buttonX, menuY + 170, buttonWidth, 50, powerupChoice == "quit")     
-            else
-                -- NORMAL PAUSE MENU
-                local menuWidth = 400
-                local menuHeight = 200
-                local menuX = (windowWidth - menuWidth) / 2
-                local menuY = (windowHeight - menuHeight) / 2
-                    
                 love.graphics.setColor(0, 0, 0, 0.7)
                 love.graphics.rectangle("fill", menuX, menuY, menuWidth, menuHeight)
 
-                local buttonWidth = 300
-                local buttonX = menuX + (menuWidth - buttonWidth) / 2
+                local titleText = "LEVEL UP! Choose a power-up:"
+                local titleWidth = font:getWidth(titleText) * 2
+                love.graphics.setColor(1, 1, 1)
+                love.graphics.print(titleText, menuX + (menuWidth - titleWidth)/2, menuY + 30, 0, 2)
+
+                local buttonX = menuX + 40
+                local buttonY = menuY + 90
+                local buttonWidth = menuWidth - 80
+                local buttonHeight = 40
+
+                drawButton("+40 Max Health", buttonX, buttonY, buttonWidth, buttonHeight, 
+                        powerupChoice == "health")
+                drawButton("+10 Damage", buttonX, buttonY + 50, buttonWidth, buttonHeight,
+                        powerupChoice == "damage")
+                drawButton("+5 Speed", buttonX, buttonY + 100, buttonWidth, buttonHeight,
+                        powerupChoice == "speed")
+                drawButton("+10% Attack Speed", buttonX, buttonY + 150, buttonWidth, buttonHeight,
+                        powerupChoice == "shootingRate")
+                drawButton("Heal to full HP", buttonX, buttonY + 200, buttonWidth, buttonHeight,
+                        powerupChoice == "heal")
+                drawButton("+1 Piercing", buttonX, buttonY + 250, buttonWidth, buttonHeight,
+                        powerupChoice == "piercing")
+            else
+                -- REGULAR PAUSE MENU OR DEATH MENU
+                if isDead then
+                    -- DEATH MENU (shows survival time)
+                    local menuWidth = 400
+                    local menuHeight = 250 
+                    local menuX = (windowWidth - menuWidth) / 2
+                    local menuY = (windowHeight - menuHeight) / 2
+                        
+                    love.graphics.setColor(0, 0, 0, 0.7)
+                    love.graphics.rectangle("fill", menuX, menuY, menuWidth, menuHeight)
+
+                    local buttonWidth = 300
+                    local buttonX = menuX + (menuWidth - buttonWidth) / 2
+
+                    love.graphics.setColor(1, 1, 1)
+                    local survivedText = "You survived: " .. math.floor(time) .. " seconds"
+                    local survivedWidth = font:getWidth(survivedText) * 1.5
+                    love.graphics.print(survivedText, menuX + (menuWidth - survivedWidth)/2, menuY + 30, 0, 1.5)
+
+                    if newRecord then
+                        local recordText = "NEW RECORD!"
+                        local recordWidth = font:getWidth(recordText) * 1.5
+                        love.graphics.setColor(1, 1, 0) 
+                        love.graphics.print(recordText, menuX + (menuWidth - recordWidth)/2, menuY + 60, 0, 1.5)
+                        love.graphics.setColor(1, 1, 1) 
+                    end
                     
-                drawButton("RESTART", buttonX, menuY + 40, buttonWidth, 50, powerupChoice == "restart")
-                drawButton("QUIT", buttonX, menuY + 120, buttonWidth, 50, powerupChoice == "quit")
+                    drawButton("RESTART", buttonX, menuY + 100, buttonWidth, 50, powerupChoice == "restart")
+                    drawButton("QUIT", buttonX, menuY + 170, buttonWidth, 50, powerupChoice == "quit")     
+                else
+                    -- NORMAL PAUSE MENU
+                    local menuWidth = 400
+                    local menuHeight = 200
+                    local menuX = (windowWidth - menuWidth) / 2
+                    local menuY = (windowHeight - menuHeight) / 2
+                        
+                    love.graphics.setColor(0, 0, 0, 0.7)
+                    love.graphics.rectangle("fill", menuX, menuY, menuWidth, menuHeight)
+
+                    local buttonWidth = 300
+                    local buttonX = menuX + (menuWidth - buttonWidth) / 2
+                        
+                    drawButton("RESTART", buttonX, menuY + 40, buttonWidth, 50, powerupChoice == "restart")
+                    drawButton("QUIT", buttonX, menuY + 120, buttonWidth, 50, powerupChoice == "quit")
+                end
             end
         end
+        
+        love.graphics.setColor(1, 1, 1)
     end
-    
+end
+
+function drawMainMenu()
+    local w = love.graphics.getWidth()
+    local h = love.graphics.getHeight()
+
+    -- 1. Draw a dark background
+    love.graphics.setColor(0.1, 0.1, 0.1, 1)
+    love.graphics.rectangle("fill", 0, 0, w, h)
+
+    -- 2. Draw Title
     love.graphics.setColor(1, 1, 1)
+    local title = "Goblin Survivors"
+    local font = love.graphics.getFont()
+    -- specific scaling for title to make it big
+    local scale = 4 
+    local textW = font:getWidth(title) * scale
+    love.graphics.print(title, (w - textW) / 2, h * 0.2, 0, scale)
+
+    -- 3. Draw Buttons
+    local btnW = 300
+    local btnH = 60
+    local btnX = (w - btnW) / 2
+    local startY = h * 0.5
+
+    drawButton("PLAY GAME", btnX, startY, btnW, btnH, menuSelection == "play")
+    drawButton("QUIT", btnX, startY + 80, btnW, btnH, menuSelection == "quit")
+    
+    -- 4. Draw Best Time
+    love.graphics.setColor(1, 1, 0)
+    local recordText = "BEST TIME: " .. math.floor(bestTime) .. "s"
+    local recW = font:getWidth(recordText) * 2
+    love.graphics.print(recordText, (w - recW)/2, h - 100, 0, 2)
 end
 
 isPaused = false
@@ -561,6 +605,28 @@ function love.mousemoved(x, y, dx, dy)
     
     local currentChoice = nil
 
+    if gameState == "menu" then
+        local btnW = 300
+        local btnH = 60
+        local btnX = (windowWidth - btnW) / 2
+        local startY = windowHeight * 0.5
+
+        if x >= btnX and x <= btnX + btnW then
+            if y >= startY and y <= startY + btnH then
+                currentChoice = "play"
+            elseif y >= startY + 80 and y <= startY + 80 + btnH then
+                currentChoice = "quit"
+            end
+        end
+
+        if currentChoice and currentChoice ~= menuSelection then
+            hoverSound:stop()
+            hoverSound:play()
+        end
+        menuSelection = currentChoice
+        return -- Stop here so we don't calculate game menu hovers
+    end
+
     if levelupMenuOpen then
         local menuWidth = 450
         local menuHeight = 400
@@ -627,6 +693,19 @@ end
 
 function love.mousepressed(x, y, button)
     if button == 1 then 
+
+        if gameState == "menu" then
+            if menuSelection == "play" then
+                clickSound:stop()
+                clickSound:play()
+                restartGame() -- Reset variables
+                gameState = "playing" -- Switch state
+            elseif menuSelection == "quit" then
+                love.event.quit()
+            end
+            return
+        end
+
         if levelupMenuOpen then
             if powerupChoice then
                 clickSound:stop()  
