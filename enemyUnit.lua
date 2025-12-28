@@ -5,7 +5,7 @@ local enemySpriteSheet
 local tntSpriteSheet
 local torchSpriteSheet
 
-local bossTime = 0
+bossTime = 0
 local bossInterval = 40
 local spawningBoss = false
 

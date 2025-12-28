@@ -2,6 +2,7 @@ time = 0
 playerLevel = 1
 xp = 0
 xpThreshold = 1000
+xpThresholdAtStart = 1000
 bestTime = 0
 newRecord = false
 
@@ -18,8 +19,19 @@ powerupChoice = nil
 
 function love.load()
 
+    love.graphics.setDefaultFilter("nearest", "nearest")
+
     love.window.maximize()
     loadBestTime()
+
+    fonts = {}
+
+    fontSize = 32
+
+    fonts.small = love.graphics.newFont("/fonts/Jersey15-Regular.ttf", fontSize / 2)
+    fonts.medium = love.graphics.newFont("/fonts/Jersey15-Regular.ttf", fontSize)
+    fonts.large = love.graphics.newFont("/fonts/Jersey15-Regular.ttf", fontSize * 2)
+    love.graphics.setFont( fonts.medium )
 
     require "mainCharacter"
     require "enemyUnit"
@@ -43,9 +55,13 @@ function love.load()
     
 
     local cursorData = love.image.newImageData("sprites/cursor.png")
+    local cursorWidth = cursorData:getWidth()
+    local cursorHeight = cursorData:getHeight()
 
-    local customCursor = love.mouse.newCursor(cursorData, 0, 0)
+    local hotspotX = cursorWidth / 2 - 10
+    local hotspotY = cursorHeight / 2 - 15
 
+    local customCursor = love.mouse.newCursor(cursorData, hotspotX, hotspotY)
     love.mouse.setCursor(customCursor)
 
     healthBarFrame = love.graphics.newImage("sprites/HealthBar-Base.png")
@@ -68,7 +84,7 @@ function love.load()
     hoverSound:setVolume(0.03) 
     clickSound:setVolume(0.0)
 
-    love.graphics.setDefaultFilter("nearest", "nearest")
+
 
     sounds = {}
 
@@ -158,20 +174,19 @@ function love.draw()
         local xpText = "XP: " .. math.floor(xp)
         local xpTextY = standardPadding
         local xpTextX = standardPadding
-        love.graphics.print(xpText, standardPadding, standardPadding, 0, 2)
 
         local timeText = "TIME: " .. math.floor(time) .. "s"
-        local timeTextWidth = font:getWidth(timeText) * 2
+        local timeTextWidth = font:getWidth(timeText)
         local timeTextX = (windowWidth - timeTextWidth) / 2 
         local timeTextY = standardPadding
 
         local bestTimeText = "BEST: " .. math.floor(bestTime) .. "s"
-        local bestTimeWidth = font:getWidth(bestTimeText) * 2
+        local bestTimeWidth = font:getWidth(bestTimeText)
         local bestTimeX = windowWidth - bestTimeWidth - standardPadding
         local bestTimeY = standardPadding
 
-        love.graphics.print(timeText, timeTextX, timeTextY, 0, 2)
-        love.graphics.print(bestTimeText, bestTimeX, bestTimeY, 0, 2)
+        love.graphics.print(timeText, timeTextX, timeTextY, 0, 1)
+        love.graphics.print(bestTimeText, bestTimeX, bestTimeY, 0, 1)
 
         local padding = 10
         local baseX = padding
@@ -192,6 +207,7 @@ function love.draw()
 
         love.graphics.draw(healthBarFill, healthQuad, baseX + barOffset.x, xpTextY + 20)
 
+        love.graphics.setFont(fonts.small)
         love.graphics.print(math.floor(player.health) .. "/" .. player.maxHealth, baseX + barOffset.x, xpTextY + 24)
 
         --xp bar
@@ -202,9 +218,10 @@ function love.draw()
 
         love.graphics.print(math.floor(xp) .. "/" .. xpThreshold, baseX + barOffset.x, xpTextY + barHeight + padding * 3 + 24)
 
-        love.graphics.print("damage: " .. player.dmg, baseX, baseY + 40, 0, 2)
-        love.graphics.print("speed: " .. player.speed, baseX, baseY + 80, 0, 2)
-        love.graphics.print("attack speed: " .. player.arrowCooldown .. "s",   baseX, baseY + 120, 0, 2)
+        love.graphics.setFont(fonts.medium)
+        love.graphics.print("damage: " .. player.dmg, baseX, baseY + 40, 0, 1)
+        love.graphics.print("speed: " .. player.speed, baseX, baseY + 80, 0, 1)
+        love.graphics.print("attack speed: " .. player.arrowCooldown .. "s",   baseX, baseY + 120, 0, 1)
 
         if isPaused then
             local windowWidth = love.graphics.getWidth()
@@ -221,9 +238,9 @@ function love.draw()
                 love.graphics.rectangle("fill", menuX, menuY, menuWidth, menuHeight)
 
                 local titleText = "LEVEL UP! Choose a power-up:"
-                local titleWidth = font:getWidth(titleText) * 2
+                local titleWidth = font:getWidth(titleText)
                 love.graphics.setColor(1, 1, 1)
-                love.graphics.print(titleText, menuX + (menuWidth - titleWidth)/2, menuY + 30, 0, 2)
+                love.graphics.print(titleText, menuX + (menuWidth - titleWidth)/2, menuY + 30, 0, 1)
 
                 local buttonX = menuX + 40
                 local buttonY = menuY + 90
@@ -257,14 +274,14 @@ function love.draw()
 
                     love.graphics.setColor(1, 1, 1)
                     local survivedText = "You survived: " .. math.floor(time) .. " seconds"
-                    local survivedWidth = font:getWidth(survivedText) * 1.5
-                    love.graphics.print(survivedText, menuX + (menuWidth - survivedWidth)/2, menuY + 30, 0, 1.5)
+                    local survivedWidth = font:getWidth(survivedText)
+                    love.graphics.print(survivedText, menuX + (menuWidth - survivedWidth)/2, menuY + 30, 0, 1)
 
                     if newRecord then
                         local recordText = "NEW RECORD!"
-                        local recordWidth = font:getWidth(recordText) * 1.5
+                        local recordWidth = font:getWidth(recordText)
                         love.graphics.setColor(1, 1, 0) 
-                        love.graphics.print(recordText, menuX + (menuWidth - recordWidth)/2, menuY + 60, 0, 1.5)
+                        love.graphics.print(recordText, menuX + (menuWidth - recordWidth)/2, menuY + 60, 0, 1)
                         love.graphics.setColor(1, 1, 1) 
                     end
                     
@@ -316,8 +333,8 @@ function drawMainMenu()
     -- 4. Draw Best Time
     love.graphics.setColor(1, 1, 0)
     local recordText = "BEST TIME: " .. math.floor(bestTime) .. "s"
-    local recW = font:getWidth(recordText) * 2
-    love.graphics.print(recordText, (w - recW)/2, h - 100, 0, 2)
+    local recW = font:getWidth(recordText)
+    love.graphics.print(recordText, (w - recW)/2, h - 100, 0, 1)
 end
 
 isPaused = false
@@ -356,11 +373,13 @@ function restartGame()
     crate.load()
     projectile.projectiles = {}
     xp = 0
+    xpThreshold = xpThresholdAtStart
     time = 0
     newRecord = false
     spawnTimer = 0
     isDead = false
     isPaused = false
+    bossTime = 0
 end
 
 function checkCollisions()
@@ -547,10 +566,10 @@ function drawButton(text, x, y, width, height, isHovered)
     love.graphics.rectangle("line", x, y, width, height, 5)
 
     local font = love.graphics.getFont()
-    local textWidth = font:getWidth(text) * 2
-    local textHeight = font:getHeight() * 2
+    local textWidth = font:getWidth(text)
+    local textHeight = font:getHeight()
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.print(text, x + (width - textWidth)/2, y + (height - textHeight)/2, 0, 2)
+    love.graphics.print(text, x + (width - textWidth)/2, y + (height - textHeight)/2, 0, 1)
 end
 
 local lastChoice = nil
